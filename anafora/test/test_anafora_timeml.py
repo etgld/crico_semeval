@@ -101,7 +101,6 @@ Scharping, <EVENT eid="e15" class="ASPECTUAL">ending</EVENT> a <TIMEX3 tid="t6" 
 
 
 def test_to_text(tmpdir):
-
     # remove elements
     text = re.sub(r"<[^>]*>", "", APW19981205_0374_tml)
     # replace XML entities
@@ -186,7 +185,9 @@ def test_to_anafora_data(tmpdir):
         "pos": "UNKNOWN",
         "polarity": "POS",
     }
-    assert dict(annotation.properties["eventID"].properties.items()) == {"class": "STATE"}
+    assert dict(annotation.properties["eventID"].properties.items()) == {
+        "class": "STATE"
+    }
 
     # <TLINK lid="l9" timeID="t3" relatedToEventInstance="ei5" relType="INCLUDES" origin="USER"/>
     annotation = data.annotations.select_id("57@r@APW19981205_0374@gold")
@@ -194,7 +195,9 @@ def test_to_anafora_data(tmpdir):
     assert re.match(pattern, str(annotation))
     assert dict(annotation.properties.items()) == {
         "timeID": data.annotations.select_id("8@e@APW19981205_0374@gold"),
-        "relatedToEventInstance": data.annotations.select_id("34@r@APW19981205_0374@gold"),
+        "relatedToEventInstance": data.annotations.select_id(
+            "34@r@APW19981205_0374@gold"
+        ),
         "relType": "INCLUDES",
         "origin": "USER",
     }
@@ -219,7 +222,9 @@ def test_to_anafora_data(tmpdir):
     assert re.match(pattern, str(annotation))
     assert dict(annotation.properties.items()) == {
         "eventInstanceID": data.annotations.select_id("48@r@APW19981205_0374@gold"),
-        "subordinatedEventInstance": data.annotations.select_id("49@r@APW19981205_0374@gold"),
+        "subordinatedEventInstance": data.annotations.select_id(
+            "49@r@APW19981205_0374@gold"
+        ),
         "relType": "EVIDENTIAL",
     }
 
@@ -229,6 +234,8 @@ def test_to_anafora_data(tmpdir):
     assert re.match(pattern, str(annotation))
     assert dict(annotation.properties.items()) == {
         "eventInstanceID": data.annotations.select_id("43@r@APW19981205_0374@gold"),
-        "relatedToEventInstance": data.annotations.select_id("42@r@APW19981205_0374@gold"),
+        "relatedToEventInstance": data.annotations.select_id(
+            "42@r@APW19981205_0374@gold"
+        ),
         "relType": "CULMINATES",
     }

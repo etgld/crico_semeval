@@ -32,7 +32,9 @@ class Schema(object):
                     properties_elem = annotation_elem.find("properties")
                     if properties_elem is not None:
                         for property_elem in properties_elem:
-                            schema_property = SchemaProperty(property_elem, self.default_attributes)
+                            schema_property = SchemaProperty(
+                                property_elem, self.default_attributes
+                            )
                             properties[schema_property.type] = schema_property
                     self.type_to_properties[annotation_type] = properties
 
@@ -46,31 +48,46 @@ class Schema(object):
         """
         schema_properties = self.type_to_properties.get(annotation.type)
         if schema_properties is None:
-            msg = 'invalid annotation type {0!r}'
+            msg = "invalid annotation type {0!r}"
             raise SchemaValidationError(msg.format(annotation.type))
         for schema_property in schema_properties.values():
-            if schema_property.required and not schema_property.type in annotation.properties:
-                msg = 'missing required property {0!r} of annotation type {1!r}'
-                raise SchemaValidationError(msg.format(schema_property.type, annotation.type))
+            if (
+                schema_property.required
+                and not schema_property.type in annotation.properties
+            ):
+                msg = "missing required property {0!r} of annotation type {1!r}"
+                raise SchemaValidationError(
+                    msg.format(schema_property.type, annotation.type)
+                )
         for name, value in annotation.properties.items():
             if name not in schema_properties:
-                msg = 'no property {0!r} defined for annotation type {1!r}'
+                msg = "no property {0!r} defined for annotation type {1!r}"
                 raise SchemaValidationError(msg.format(name, annotation.type))
             schema_property = schema_properties[name]
             if schema_property.instance_of is not None:
                 if not isinstance(value, anafora.AnaforaAnnotation):
-                    msg = 'invalid value {0!r} for property {1!r} of annotation type {2!r}'
-                    raise SchemaValidationError(msg.format(value, schema_property.type, annotation.type))
+                    msg = "invalid value {0!r} for property {1!r} of annotation type {2!r}"
+                    raise SchemaValidationError(
+                        msg.format(value, schema_property.type, annotation.type)
+                    )
                 if not value.type in schema_property.instance_of:
-                    msg = 'invalid type {0!r} for property {1!r} of annotation type {2!r}'
-                    raise SchemaValidationError(msg.format(value.type, schema_property.type, annotation.type))
+                    msg = (
+                        "invalid type {0!r} for property {1!r} of annotation type {2!r}"
+                    )
+                    raise SchemaValidationError(
+                        msg.format(value.type, schema_property.type, annotation.type)
+                    )
             if schema_property.choices is not None:
                 if isinstance(value, anafora.AnaforaAnnotation):
-                    msg = 'invalid value {0!r} for property {1!r} of annotation type {2!r}'
-                    raise SchemaValidationError(msg.format(value, schema_property.type, annotation.type))
+                    msg = "invalid value {0!r} for property {1!r} of annotation type {2!r}"
+                    raise SchemaValidationError(
+                        msg.format(value, schema_property.type, annotation.type)
+                    )
                 elif value not in schema_property.choices:
-                    msg = 'invalid value {0!r} for property {1!r} of annotation type {2!r}'
-                    raise SchemaValidationError(msg.format(value, schema_property.type, annotation.type))
+                    msg = "invalid value {0!r} for property {1!r} of annotation type {2!r}"
+                    raise SchemaValidationError(
+                        msg.format(value, schema_property.type, annotation.type)
+                    )
 
     def errors(self, data):
         """
@@ -154,27 +171,54 @@ def log_entities_with_identical_spans(anafora_dir, xml_name_regex):
                 pass
             else:
                 for span, annotations in find_entities_with_identical_spans(data):
-                    logging.warn("%s: multiple entities for span %s:\n%s",
-                                 xml_path, span, "\n".join(str(ann).rstrip() for ann in annotations))
+                    logging.warn(
+                        "%s: multiple entities for span %s:\n%s",
+                        xml_path,
+                        span,
+                        "\n".join(str(ann).rstrip() for ann in annotations),
+                    )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="""%(prog)s validates Anafora XML files against an Anafora schema and
+    parser = argparse.ArgumentParser(
+        description="""%(prog)s validates Anafora XML files against an Anafora schema and
         logs any errors. It can also identify other potential errors such as the presence of distinct entities with
-        identical text spans.""")
-    parser.add_argument("-s", "--schema", metavar="FILE", required=True,
-                        help="An Anafora schema XML file against which Anafora annotation XML files should be " +
-                             "validated.")
-    parser.add_argument("-i", "--input", metavar="DIR", required=True, dest="anafora_dir",
-                        help="The root of a set of Anafora annotation XML directories.")
-    parser.add_argument("-x", "--xml-name-regex", metavar="REGEX", default="[.]xml$",
-                        help="A regular expression for matching XML files, typically used to restrict the validation " +
-                             "to a subset of the available files (default: %(default)r)")
-    parser.add_argument("--identical-spans", action='store_true',
-                        help="Also log any pairs of entities that span the exact same text offsets.")
+        identical text spans."""
+    )
+    parser.add_argument(
+        "-s",
+        "--schema",
+        metavar="FILE",
+        required=True,
+        help="An Anafora schema XML file against which Anafora annotation XML files should be "
+        + "validated.",
+    )
+    parser.add_argument(
+        "-i",
+        "--input",
+        metavar="DIR",
+        required=True,
+        dest="anafora_dir",
+        help="The root of a set of Anafora annotation XML directories.",
+    )
+    parser.add_argument(
+        "-x",
+        "--xml-name-regex",
+        metavar="REGEX",
+        default="[.]xml$",
+        help="A regular expression for matching XML files, typically used to restrict the validation "
+        + "to a subset of the available files (default: %(default)r)",
+    )
+    parser.add_argument(
+        "--identical-spans",
+        action="store_true",
+        help="Also log any pairs of entities that span the exact same text offsets.",
+    )
     args = parser.parse_args()
     logging.basicConfig(format="%(levelname)s:%(message)s")
 
-    log_schema_errors(Schema.from_file(args.schema), args.anafora_dir, args.xml_name_regex)
+    log_schema_errors(
+        Schema.from_file(args.schema), args.anafora_dir, args.xml_name_regex
+    )
     if args.identical_spans:
         log_entities_with_identical_spans(args.anafora_dir, args.xml_name_regex)

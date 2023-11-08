@@ -4,22 +4,28 @@ import anafora
 
 
 def test_empty():
-    data = anafora.AnaforaData(anafora.ElementTree.fromstring('<data/>'))
+    data = anafora.AnaforaData(anafora.ElementTree.fromstring("<data/>"))
     assert list(data.annotations) == []
 
-    data = anafora.AnaforaData(anafora.ElementTree.fromstring('<data><annotations></annotations></data>'))
+    data = anafora.AnaforaData(
+        anafora.ElementTree.fromstring("<data><annotations></annotations></data>")
+    )
     assert list(data.annotations) == []
 
 
 def test_duplicate_id():
     with pytest.raises(ValueError):
-        anafora.AnaforaData(anafora.ElementTree.fromstring('''
+        anafora.AnaforaData(
+            anafora.ElementTree.fromstring(
+                """
         <data>
             <annotations>
                 <entity><id>1</id></entity>
                 <entity><id>1</id></entity>
             </annotations>
-        </data>'''))
+        </data>"""
+            )
+        )
 
     data = anafora.AnaforaData()
     entity1 = anafora.AnaforaEntity()
@@ -33,30 +39,37 @@ def test_duplicate_id():
 
 def test_add_entity():
     data = anafora.AnaforaData()
-    assert str(data) == '<data />'
+    assert str(data) == "<data />"
     entity = anafora.AnaforaEntity()
     with pytest.raises(ValueError) as exception_info:
         data.annotations.append(entity)
     assert "id" in str(exception_info.value)
-    assert str(data) == '<data />'
+    assert str(data) == "<data />"
     entity.id = "1"
     data.annotations.append(entity)
-    assert str(data) == '<data><annotations><entity><id>1</id></entity></annotations></data>'
+    assert (
+        str(data)
+        == "<data><annotations><entity><id>1</id></entity></annotations></data>"
+    )
     entity.type = "X"
     entity.parents_type = "Y"
     entity.properties["name1"] = "value1"
-    assert str(data) == ('<data><annotations><entity>' +
-                         '<id>1</id>' +
-                         '<type>X</type>' +
-                         '<parentsType>Y</parentsType>' +
-                         '<properties><name1>value1</name1></properties>' +
-                         '</entity></annotations></data>')
+    assert str(data) == (
+        "<data><annotations><entity>"
+        + "<id>1</id>"
+        + "<type>X</type>"
+        + "<parentsType>Y</parentsType>"
+        + "<properties><name1>value1</name1></properties>"
+        + "</entity></annotations></data>"
+    )
     del entity.properties["name1"]
-    assert str(data) == ('<data><annotations><entity>' +
-                         '<id>1</id>' +
-                         '<type>X</type>' +
-                         '<parentsType>Y</parentsType>' +
-                         '</entity></annotations></data>')
+    assert str(data) == (
+        "<data><annotations><entity>"
+        + "<id>1</id>"
+        + "<type>X</type>"
+        + "<parentsType>Y</parentsType>"
+        + "</entity></annotations></data>"
+    )
     with pytest.raises(ValueError):
         del entity.properties["name2"]
 
@@ -76,15 +89,17 @@ def test_add_reference():
     assert "<annotations" in str(exception_info.value)
     data.annotations.append(entity2)
     entity2.properties["link"] = entity1
-    assert str(data) == ('<data><annotations>' +
-                         '<entity><id>@1@</id></entity>' +
-                         '<entity><id>@2@</id><properties><link>@1@</link></properties></entity>' +
-                         '</annotations></data>')
+    assert str(data) == (
+        "<data><annotations>"
+        + "<entity><id>@1@</id></entity>"
+        + "<entity><id>@2@</id><properties><link>@1@</link></properties></entity>"
+        + "</annotations></data>"
+    )
 
 
 def test_remove():
     data = anafora.AnaforaData()
-    assert str(data) == '<data />'
+    assert str(data) == "<data />"
     entity1 = anafora.AnaforaEntity()
     entity1.id = "@1@"
     data.annotations.append(entity1)
@@ -93,22 +108,28 @@ def test_remove():
     entity2.properties["name"] = "value"
     data.annotations.append(entity2)
     assert list(data.annotations) == [entity1, entity2]
-    assert str(data) == ('<data><annotations>' +
-                         '<entity><id>@1@</id></entity>' +
-                         '<entity><id>@2@</id><properties><name>value</name></properties></entity>' +
-                         '</annotations></data>')
+    assert str(data) == (
+        "<data><annotations>"
+        + "<entity><id>@1@</id></entity>"
+        + "<entity><id>@2@</id><properties><name>value</name></properties></entity>"
+        + "</annotations></data>"
+    )
     data.annotations.remove(entity1)
     assert list(data.annotations) == [entity2]
-    assert str(data) == ('<data><annotations>' +
-                         '<entity><id>@2@</id><properties><name>value</name></properties></entity>' +
-                         '</annotations></data>')
+    assert str(data) == (
+        "<data><annotations>"
+        + "<entity><id>@2@</id><properties><name>value</name></properties></entity>"
+        + "</annotations></data>"
+    )
     data.annotations.remove(entity2)
     assert list(data.annotations) == []
-    assert str(data) == '<data><annotations /></data>'
+    assert str(data) == "<data><annotations /></data>"
 
 
 def test_spans():
-    data = anafora.AnaforaData(anafora.ElementTree.fromstring('''
+    data = anafora.AnaforaData(
+        anafora.ElementTree.fromstring(
+            """
         <data>
             <annotations>
                 <relation>
@@ -131,7 +152,9 @@ def test_spans():
                     <span>5,7</span>
                 </entity>
             </annotations>
-        </data>'''))
+        </data>"""
+        )
+    )
     assert data.annotations.select_id("1").spans == ((((5, 7),),),)
     assert data.annotations.select_id("2").spans == (((5, 7),),)
     assert data.annotations.select_id("3").spans == ((5, 7),)
@@ -166,9 +189,10 @@ def test_recursive_entity():
     assert not d.is_self_referential()
 
 
-
 def test_sort():
-    data = anafora.AnaforaData(anafora.ElementTree.fromstring('''
+    data = anafora.AnaforaData(
+        anafora.ElementTree.fromstring(
+            """
         <data>
             <annotations>
                 <entity>
@@ -182,6 +206,7 @@ def test_sort():
                     <span>3,4</span>
                 </entity>
             </annotations>
-        </data>'''))
-    assert [a.id for a in sorted(data.annotations)] == ['2', '1']
-
+        </data>"""
+        )
+    )
+    assert [a.id for a in sorted(data.annotations)] == ["2", "1"]

@@ -3,11 +3,9 @@ import anafora.regex
 
 
 def test_regex_annotator():
-    annotator = anafora.regex.RegexAnnotator({
-        'aa+': ('A', {}),
-        'a': ('A', {'X': '2'}),
-        'bb': ('B', {'Y': '1'})
-    })
+    annotator = anafora.regex.RegexAnnotator(
+        {"aa+": ("A", {}), "a": ("A", {"X": "2"}), "bb": ("B", {"Y": "1"})}
+    )
     text = "bb aaa"
     data = anafora.AnaforaData()
     annotator.annotate(text, data)
@@ -16,20 +14,17 @@ def test_regex_annotator():
     [b_annotation, a_annotation] = data.annotations
     assert b_annotation.type == "B"
     assert b_annotation.spans == ((0, 2),)
-    assert dict(b_annotation.properties.items()) == {'Y': '1'}
+    assert dict(b_annotation.properties.items()) == {"Y": "1"}
     assert a_annotation.type == "A"
     assert a_annotation.spans == ((3, 6),)
     assert dict(a_annotation.properties.items()) == {}
 
 
 def test_preannotated():
-    annotator = anafora.regex.RegexAnnotator({
-        'aa+': ('A', {'X': '2'}),
-        'a': ('A', {}),
-        'bb': ('B', {'Y': '1'})
-    }, {
-        'C': {'Z': '3'}
-    })
+    annotator = anafora.regex.RegexAnnotator(
+        {"aa+": ("A", {"X": "2"}), "a": ("A", {}), "bb": ("B", {"Y": "1"})},
+        {"C": {"Z": "3"}},
+    )
     text = "bb aaa"
     data = anafora.AnaforaData()
     bb = anafora.AnaforaEntity()
@@ -48,19 +43,19 @@ def test_preannotated():
     [b_annotation, c_annotation, a_annotation] = data.annotations
     assert b_annotation.type == "B"
     assert b_annotation.spans == ((0, 2),)
-    assert dict(b_annotation.properties.items()) == {'Y': '1'}
+    assert dict(b_annotation.properties.items()) == {"Y": "1"}
     assert c_annotation.type == "C"
     assert c_annotation.spans == ((3, 6),)
-    assert dict(c_annotation.properties.items()) == {'Z': '3'}
+    assert dict(c_annotation.properties.items()) == {"Z": "3"}
     assert a_annotation.type == "A"
     assert a_annotation.spans == ((3, 6),)
-    assert dict(a_annotation.properties.items()) == {'X': '2'}
+    assert dict(a_annotation.properties.items()) == {"X": "2"}
 
 
 def test_many_groups():
     regex_predictions = {}
     for i in range(1, 1000):
-        regex_predictions['a' * i] = ('A' * i, {})
+        regex_predictions["a" * i] = ("A" * i, {})
     annotator = anafora.regex.RegexAnnotator(regex_predictions)
     text = "aaaaaaaaaa"
     data = anafora.AnaforaData()
@@ -75,35 +70,38 @@ def test_many_groups():
 
 def test_file_roundtrip(tmpdir):
     annotator_path = str(tmpdir.join("temp.annotator"))
-    annotator = anafora.regex.RegexAnnotator({
-        'the year': ('DATE', {}),
-        'John': ('PERSON', {'type': 'NAME', 'gender': 'MALE'}),
-        '.1.2.\d+;': ('OTHER', {})
-    }, {
-        'PERSON': {'type': 'NAME', 'gender': 'FEMALE'}
-    })
+    annotator = anafora.regex.RegexAnnotator(
+        {
+            "the year": ("DATE", {}),
+            "John": ("PERSON", {"type": "NAME", "gender": "MALE"}),
+            ".1.2.\d+;": ("OTHER", {}),
+        },
+        {"PERSON": {"type": "NAME", "gender": "FEMALE"}},
+    )
     annotator.to_file(annotator_path)
     assert anafora.regex.RegexAnnotator.from_file(annotator_path) == annotator
 
 
 def test_simple_file(tmpdir):
     path = tmpdir.join("temp.annotator")
-    path.write("""\
+    path.write(
+        """\
 aaa aaa\tA
 b\tB\t{"x": "y"}
 \\dc\\s+x\tC
-""")
-    annotator = anafora.regex.RegexAnnotator({
-        'aaa aaa': ('A', {}),
-        'b': ('B', {'x': 'y'}),
-        r'\dc\s+x': ('C', {})
-    })
+"""
+    )
+    annotator = anafora.regex.RegexAnnotator(
+        {"aaa aaa": ("A", {}), "b": ("B", {"x": "y"}), r"\dc\s+x": ("C", {})}
+    )
     assert anafora.regex.RegexAnnotator.from_file(str(path)) == annotator
 
 
 def test_train():
     text1 = "aaa bb ccccc dddd"
-    data1 = anafora.AnaforaData(anafora.ElementTree.fromstring("""
+    data1 = anafora.AnaforaData(
+        anafora.ElementTree.fromstring(
+            """
     <data>
         <annotations>
             <entity>
@@ -129,9 +127,13 @@ def test_train():
             </entity>
         </annotations>
     </data>
-    """))
+    """
+        )
+    )
     text2 = "ccccc dddd ccccc dddd ccccc."
-    data2 = anafora.AnaforaData(anafora.ElementTree.fromstring("""
+    data2 = anafora.AnaforaData(
+        anafora.ElementTree.fromstring(
+            """
     <data>
         <annotations>
             <entity>
@@ -166,28 +168,40 @@ def test_train():
             </entity>
         </annotations>
     </data>
-    """))
+    """
+        )
+    )
 
-    annotator = anafora.regex.RegexAnnotator({
-        r'\baaa\s+bb\b': ('AA', {"a": "A"}),
-        r'\bccccc\b': ('CC', {"c": "C", "d": "D"}),
-        r'\b\.': ('PERIOD', {}),
-    }, {
-        'AA': {'a': 'A', 'c': 'B'},
-        'CC': {'c': 'C', 'd': 'D'},
-    })
-    assert anafora.regex.RegexAnnotator.train([(text1, data1), (text2, data2)]) == annotator
+    annotator = anafora.regex.RegexAnnotator(
+        {
+            r"\baaa\s+bb\b": ("AA", {"a": "A"}),
+            r"\bccccc\b": ("CC", {"c": "C", "d": "D"}),
+            r"\b\.": ("PERIOD", {}),
+        },
+        {
+            "AA": {"a": "A", "c": "B"},
+            "CC": {"c": "C", "d": "D"},
+        },
+    )
+    assert (
+        anafora.regex.RegexAnnotator.train([(text1, data1), (text2, data2)])
+        == annotator
+    )
 
 
 def test_filter_by_precision():
-    annotator = anafora.regex.RegexAnnotator({
-        r'the': ("THE", {}),
-        r'\bthe\b': ("THE", {}),
-        r'yer\b': ("ER", {}),
-        r'er\b': ("ER", {})
-    })
+    annotator = anafora.regex.RegexAnnotator(
+        {
+            r"the": ("THE", {}),
+            r"\bthe\b": ("THE", {}),
+            r"yer\b": ("ER", {}),
+            r"er\b": ("ER", {}),
+        }
+    )
     text = "the theater near the record player"
-    data = anafora.AnaforaData(anafora.ElementTree.fromstring("""
+    data = anafora.AnaforaData(
+        anafora.ElementTree.fromstring(
+            """
     <data>
         <annotations>
             <entity>
@@ -212,15 +226,14 @@ def test_filter_by_precision():
             </entity>
         </annotations>
     </data>
-    """))
+    """
+        )
+    )
     annotator.prune_by_precision(0.6, [(text, data)])
-    assert annotator == anafora.regex.RegexAnnotator({
-        r'the': ("THE", {}),
-        r'\bthe\b': ("THE", {}),
-        r'er\b': ("ER", {})
-    })
+    assert annotator == anafora.regex.RegexAnnotator(
+        {r"the": ("THE", {}), r"\bthe\b": ("THE", {}), r"er\b": ("ER", {})}
+    )
     annotator.prune_by_precision(1.0, [(text, data)])
-    assert annotator == anafora.regex.RegexAnnotator({
-        r'\bthe\b': ("THE", {}),
-        r'er\b': ("ER", {})
-    })
+    assert annotator == anafora.regex.RegexAnnotator(
+        {r"\bthe\b": ("THE", {}), r"er\b": ("ER", {})}
+    )

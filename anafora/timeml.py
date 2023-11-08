@@ -10,7 +10,7 @@ def to_text(timeml_path):
     :param xml.etree.ElementTree.Element timeml_path: path of the TimeML XML
     :return string: the (plain) text content of the XML
     """
-    return ''.join(anafora.ElementTree.parse(timeml_path).getroot().itertext())
+    return "".join(anafora.ElementTree.parse(timeml_path).getroot().itertext())
 
 
 def to_anafora_data(timeml_path):
@@ -28,29 +28,47 @@ def to_anafora_data(timeml_path):
         "SLINK": "lid",
         "ALINK": "lid",
     }
-    ref_id_attrs = {"eventID", "signalID", "beginPoint", "endPoint", "valueFromFunction", "anchorTimeID",
-                    "eventInstanceID", "timeID", "signalID", "relatedToEventInstance", "relatedToTime",
-                    "subordinatedEventInstance", "tagID"}
+    ref_id_attrs = {
+        "eventID",
+        "signalID",
+        "beginPoint",
+        "endPoint",
+        "valueFromFunction",
+        "anchorTimeID",
+        "eventInstanceID",
+        "timeID",
+        "signalID",
+        "relatedToEventInstance",
+        "relatedToTime",
+        "subordinatedEventInstance",
+        "tagID",
+    }
     text = to_text(timeml_path)
     data = anafora.AnaforaData()
     root = anafora.ElementTree.parse(timeml_path).getroot()
 
-    prefix_to_char = {'t': 'e', 'e': 'e', 's': 'e', 'ei': 'r', 'l': 'r'}
+    prefix_to_char = {"t": "e", "e": "e", "s": "e", "ei": "r", "l": "r"}
     timeml_id_to_anafora_id = {}
     count = 1
     file_base, _ = os.path.splitext(os.path.basename(timeml_path))
     for elem in root.iter():
         if elem.tag in tag_id_attrs:
             timeml_id = elem.attrib[tag_id_attrs[elem.tag]]
-            [(prefix, number)] = re.findall(r'^(\D+)(\d+)$', timeml_id)
-            timeml_id_to_anafora_id[timeml_id] = '{0:d}@{1}@{2}@gold'.format(count, prefix_to_char[prefix], file_base)
+            [(prefix, number)] = re.findall(r"^(\D+)(\d+)$", timeml_id)
+            timeml_id_to_anafora_id[timeml_id] = "{0:d}@{1}@{2}@gold".format(
+                count, prefix_to_char[prefix], file_base
+            )
             count += 1
 
     def add_annotations_from(elem, offset=0):
         start = offset
         annotation = None
         if elem.tag in tag_id_attrs:
-            annotation = anafora.AnaforaEntity() if elem.tag in entity_tags else anafora.AnaforaRelation()
+            annotation = (
+                anafora.AnaforaEntity()
+                if elem.tag in entity_tags
+                else anafora.AnaforaRelation()
+            )
             id_attr = tag_id_attrs[elem.tag]
             annotation.id = timeml_id_to_anafora_id[elem.attrib[id_attr]]
             annotation.type = elem.tag
@@ -71,7 +89,11 @@ def to_anafora_data(timeml_path):
         if annotation is not None and isinstance(annotation, anafora.AnaforaEntity):
             annotation.spans = ((start, offset),)
             if elem.text != text[start:offset]:
-                raise ValueError('{0}: "{1}" != "{2}"'.format(timeml_path, elem.text, text[start:offset]))
+                raise ValueError(
+                    '{0}: "{1}" != "{2}"'.format(
+                        timeml_path, elem.text, text[start:offset]
+                    )
+                )
 
         if elem.tail is not None:
             offset += len(elem.tail)
@@ -84,9 +106,9 @@ def to_anafora_data(timeml_path):
 def _timeml_dir_to_anafora_dir(timeml_dir, anafora_dir, schema_name="TimeML"):
     for root, _, file_names in os.walk(timeml_dir):
         if root.startswith(timeml_dir):
-            sub_dir = root[len(timeml_dir):].lstrip(os.path.sep)
+            sub_dir = root[len(timeml_dir) :].lstrip(os.path.sep)
         else:
-            sub_dir = ''
+            sub_dir = ""
 
         for file_name in file_names:
             if file_name.endswith(".tml"):
@@ -101,10 +123,12 @@ def _timeml_dir_to_anafora_dir(timeml_dir, anafora_dir, schema_name="TimeML"):
                     os.makedirs(anafora_file_dir)
                 anafora_file_path = os.path.join(anafora_file_dir, anafora_file_name)
 
-                with open(anafora_file_path, 'w') as text_file:
+                with open(anafora_file_path, "w") as text_file:
                     text_file.write(text)
                 data.indent()
-                data.to_file("{0}.{1}.gold.completed.xml".format(anafora_file_path, schema_name))
+                data.to_file(
+                    "{0}.{1}.gold.completed.xml".format(anafora_file_path, schema_name)
+                )
 
 
 if __name__ == "__main__":

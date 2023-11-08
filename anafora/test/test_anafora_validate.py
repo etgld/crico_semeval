@@ -1,8 +1,11 @@
 import anafora
 import anafora.validate
 
+
 def test_schema_validate():
-    schema = anafora.validate.Schema(anafora.ElementTree.fromstring("""
+    schema = anafora.validate.Schema(
+        anafora.ElementTree.fromstring(
+            """
         <schema>
         <defaultattribute>
             <required>True</required>
@@ -29,7 +32,9 @@ def test_schema_validate():
             </relations>
         </definition>
         </schema>
-        """))
+        """
+        )
+    )
     data = anafora.AnaforaData()
     entity1 = anafora.AnaforaEntity()
     entity1.id = "@1@"

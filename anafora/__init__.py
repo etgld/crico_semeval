@@ -20,12 +20,16 @@ def walk(root, xml_name_regex="[.]xml$"):
     """
     for dir_path, dir_names, file_names in os.walk(root):
         if not dir_names:
-            sub_dir = ''
+            sub_dir = ""
             if dir_path.startswith(root):
-                sub_dir = dir_path[len(root):]
+                sub_dir = dir_path[len(root) :]
                 if sub_dir.startswith(os.path.sep):
-                    sub_dir = sub_dir[len(os.path.sep):]
-            xml_names = [file_name for file_name in file_names if re.search(xml_name_regex, file_name) is not None]
+                    sub_dir = sub_dir[len(os.path.sep) :]
+            xml_names = [
+                file_name
+                for file_name in file_names
+                if re.search(xml_name_regex, file_name) is not None
+            ]
             if xml_names:
                 text_name = os.path.basename(dir_path)
                 yield sub_dir, text_name, xml_names
@@ -47,7 +51,7 @@ def walk_flat_to_anafora(text_dir):
     :return iterator: an iterator of (input-sub-dir, output-sub-dir, text-file-name, xml-file-names)
     """
     for file_name in os.listdir(text_dir):
-        yield '', file_name, file_name, []
+        yield "", file_name, file_name, []
 
 
 class _XMLWrapper(object):
@@ -61,9 +65,9 @@ class _XMLWrapper(object):
         if self.xml is not None:
             result = ElementTree.tostring(self.xml)
             if sys.version_info.major >= 3:
-                result = result.decode('utf-8')
+                result = result.decode("utf-8")
         else:
-            result = '{0}()'.format(self.__class__.__name__)
+            result = "{0}()".format(self.__class__.__name__)
         return result
 
 
@@ -97,10 +101,13 @@ class AnaforaData(_XMLWrapper):
             else:
                 if level and (not elem.tail or not elem.tail.strip()):
                     elem.tail = i
+
         _indent(self.xml)
 
     def to_file(self, xml_path):
-        ElementTree.ElementTree(self.xml).write(xml_path, encoding="UTF-8", xml_declaration=True)
+        ElementTree.ElementTree(self.xml).write(
+            xml_path, encoding="UTF-8", xml_declaration=True
+        )
 
 
 class AnaforaAnnotations(_XMLWrapper):
@@ -173,11 +180,12 @@ class AnaforaAnnotation(_XMLWrapper):
 
     def __eq__(self, other):
         return (
-            isinstance(other, AnaforaAnnotation) and
-            self.spans == other.spans and
-            self.type == other.type and
-            self.parents_type == other.parents_type and
-            self.properties == other.properties)
+            isinstance(other, AnaforaAnnotation)
+            and self.spans == other.spans
+            and self.type == other.type
+            and self.parents_type == other.parents_type
+            and self.properties == other.properties
+        )
 
     def __ne__(self, other):
         return not (self == other)
@@ -241,6 +249,7 @@ class AnaforaAnnotation(_XMLWrapper):
                 if value.is_self_referential(dict(seen_ids)):
                     return True
         return False
+
 
 class AnaforaProperties(_XMLWrapper):
     def __init__(self, xml, _annotation):
@@ -311,7 +320,7 @@ class AnaforaProperties(_XMLWrapper):
 
     def __delitem__(self, name):
         if name not in self._tag_to_property_xml:
-            raise ValueError('no such property {0!r}'.format(name))
+            raise ValueError("no such property {0!r}".format(name))
         self.xml.remove(self._tag_to_property_xml.pop(name))
         if not self._tag_to_property_xml:
             self._annotation.xml.remove(self.xml)
@@ -332,12 +341,16 @@ class AnaforaEntity(AnaforaAnnotation):
         spans_text = self.xml.findtext("span")
         if spans_text is None:
             return ()
-        return tuple(tuple(int(offset) for offset in tuple(span_text.split(",")))
-                     for span_text in spans_text.split(";"))
+        return tuple(
+            tuple(int(offset) for offset in tuple(span_text.split(",")))
+            for span_text in spans_text.split(";")
+        )
 
     @spans.setter
     def spans(self, spans):
-        if not isinstance(spans, tuple) or not all(isinstance(span, tuple) and len(span) == 2 for span in spans):
+        if not isinstance(spans, tuple) or not all(
+            isinstance(span, tuple) and len(span) == 2 for span in spans
+        ):
             raise ValueError("spans must be a tuple of pairs")
         span_elem = self.xml.find("span")
         if span_elem is None:
@@ -356,4 +369,5 @@ class AnaforaRelation(AnaforaAnnotation):
         return tuple(
             self.properties[name].spans
             for name in sorted(self.properties)
-            if isinstance(self.properties[name], AnaforaAnnotation))
+            if isinstance(self.properties[name], AnaforaAnnotation)
+        )
